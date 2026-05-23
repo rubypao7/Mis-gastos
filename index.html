@@ -15,14 +15,34 @@
 <body>
   <header class="app-header">
     <h1>Mis Gastos</h1>
+
+    <div class="cuenta-tabs" id="cuenta-tabs">
+      <button type="button" class="cuenta-tab" data-vista="Rubén">Rubén</button>
+      <button type="button" class="cuenta-tab" data-vista="Paola">Paola</button>
+      <button type="button" class="cuenta-tab active" data-vista="Total">Total</button>
+    </div>
+
+    <div class="periodo-toggle" id="periodo-toggle">
+      <button type="button" data-periodo="mes" class="active">Mes</button>
+      <button type="button" data-periodo="anio">Año</button>
+      <button type="button" data-periodo="todo">Todo</button>
+    </div>
+
+    <div class="periodo-nav" id="periodo-nav">
+      <button type="button" id="periodo-prev" aria-label="Anterior">◀</button>
+      <span id="periodo-label">—</span>
+      <button type="button" id="periodo-next" aria-label="Siguiente">▶</button>
+    </div>
+
     <div class="balance-card">
-      <span class="balance-label">Balance</span>
+      <span class="balance-label" id="balance-label">Saldo total</span>
       <span class="balance-amount" id="balance">$0.00</span>
       <div class="balance-detail">
         <span class="ingreso">▲ <span id="total-ingresos">$0.00</span></span>
         <span class="gasto">▼ <span id="total-gastos">$0.00</span></span>
       </div>
     </div>
+
     <div class="sync-bar oculto" id="sync-bar">
       <span class="badge badge-gray" id="sync-status">Sin conectar</span>
       <button class="cuenta-btn" id="btn-cuenta" data-accion="conectar">Conectar OneDrive</button>
@@ -31,10 +51,16 @@
   </header>
 
   <main>
+    <section class="resumen" id="resumen"></section>
+
     <form id="form" class="form">
       <div class="tipo-toggle">
         <button type="button" class="tipo-btn active" data-tipo="gasto">Gasto</button>
         <button type="button" class="tipo-btn" data-tipo="ingreso">Ingreso</button>
+      </div>
+      <div class="cuenta-toggle" id="cuenta-toggle">
+        <button type="button" class="cuenta-sel active" data-cuenta="Rubén">Rubén</button>
+        <button type="button" class="cuenta-sel" data-cuenta="Paola">Paola</button>
       </div>
       <input type="text" id="descripcion" placeholder="Descripción (ej. Comida)" required>
       <div class="row">
@@ -50,11 +76,15 @@
           <option value="💰 Otros">💰 Otros</option>
         </select>
       </div>
-      <button type="submit" class="add-btn">Añadir</button>
+      <input type="date" id="fecha" class="fecha-input">
+      <div class="form-acciones">
+        <button type="button" class="cancel-btn oculto" id="cancel-btn">Cancelar</button>
+        <button type="submit" class="add-btn" id="submit-btn">Añadir</button>
+      </div>
     </form>
 
     <section class="lista-section">
-      <h2>Movimientos</h2>
+      <h2 id="lista-titulo">Movimientos</h2>
       <ul id="lista" class="lista"></ul>
       <p id="vacio" class="vacio">Aún no hay movimientos. ¡Añade el primero!</p>
     </section>
