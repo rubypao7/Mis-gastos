@@ -1,4 +1,4 @@
-const CACHE = "mis-gastos-v3";
+const CACHE = "mis-gastos-v4";
 const ARCHIVOS = [
   "index.html",
   "styles.css",
@@ -18,15 +18,30 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((claves) =>
-      Promise.all(claves.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((claves) =>
+        Promise.all(claves.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// "Red primero": siempre intentamos la versión más nueva de internet y
+// actualizamos la caché. Si no hay conexión, servimos lo guardado (offline).
+// Los archivos de otros dominios (CDN de MSAL) los gestiona el navegador.
 self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).origin !== self.location.origin) return;
+
   e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
+    fetch(req)
+      .then((res) => {
+        const copia = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copia));
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });

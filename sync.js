@@ -21,7 +21,14 @@ function haySesion() {
 }
 
 async function initSync() {
-  if (!syncConfigurada() || typeof msal === "undefined") return false;
+  if (!syncConfigurada()) return false;
+  if (typeof msal === "undefined") {
+    throw new Error(
+      "No se pudo cargar la librería de inicio de sesión de Microsoft (MSAL). " +
+        "Suele deberse a la conexión a internet, a un bloqueador de contenido, " +
+        "o a que el navegador guardó una versión antigua de la app. Recarga la página."
+    );
+  }
 
   msalApp = new msal.PublicClientApplication({
     auth: {
@@ -34,7 +41,8 @@ async function initSync() {
 
   await msalApp.initialize();
 
-  const resp = await msalApp.handleRedirectPromise().catch(() => null);
+  // No ocultamos el error: si el regreso del login trae un fallo, debe verse.
+  const resp = await msalApp.handleRedirectPromise();
   if (resp && resp.account) {
     cuenta = resp.account;
   } else {
@@ -46,7 +54,11 @@ async function initSync() {
 }
 
 async function conectarOneDrive() {
-  if (!msalApp) return;
+  if (!msalApp) {
+    throw new Error(
+      "La sincronización no llegó a iniciarse (MSAL no está listo). Recarga la app e inténtalo de nuevo."
+    );
+  }
   // Redirect funciona mejor que popup dentro de una PWA instalada.
   await msalApp.loginRedirect({ scopes: SCOPES });
 }

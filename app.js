@@ -16,6 +16,11 @@ const tipoBtns = document.querySelectorAll(".tipo-btn");
 const syncBar = document.getElementById("sync-bar");
 const syncStatus = document.getElementById("sync-status");
 const btnCuenta = document.getElementById("btn-cuenta");
+const syncMsg = document.getElementById("sync-msg");
+
+function textoError(e) {
+  return e && e.message ? e.message : String(e);
+}
 
 // ---- Datos (formato { movimientos: [], updatedAt: ms }) ----
 
@@ -126,6 +131,18 @@ function setEstado(estado, detalle) {
   syncStatus.className = "badge " + clase;
   syncStatus.title = detalle || texto;
 
+  // En pantalla táctil no hay "title" visible: mostramos el detalle del error
+  // como texto bien legible bajo la barra, y lo ocultamos cuando todo va bien.
+  if (syncMsg) {
+    if (estado === "error" && detalle) {
+      syncMsg.textContent = detalle;
+      syncMsg.classList.remove("oculto");
+    } else {
+      syncMsg.textContent = "";
+      syncMsg.classList.add("oculto");
+    }
+  }
+
   const conectado = estado !== "sin-conectar";
   btnCuenta.textContent = conectado ? "Desconectar" : "Conectar OneDrive";
   btnCuenta.dataset.accion = conectado ? "desconectar" : "conectar";
@@ -176,11 +193,8 @@ async function arrancarSync() {
   }
   if (syncBar) syncBar.classList.remove("oculto");
 
-  if (typeof msal === "undefined") {
-    setEstado("error", "No se pudo cargar el inicio de sesión de Microsoft. Revisa tu conexión a internet y recarga la app.");
-    return;
-  }
-
+  // El botón SIEMPRE responde, aunque MSAL no se haya cargado: así nunca
+  // se queda "sin hacer nada" en silencio; si algo falla, lo explica.
   btnCuenta.addEventListener("click", async () => {
     try {
       if (btnCuenta.dataset.accion === "desconectar") {
@@ -190,14 +204,14 @@ async function arrancarSync() {
         await conectarOneDrive();
       }
     } catch (e) {
-      setEstado("error", "No se pudo iniciar sesión: " + (e && e.message ? e.message : e));
+      setEstado("error", "No se pudo iniciar sesión: " + textoError(e));
     }
   });
 
   try {
     await initSync();
   } catch (e) {
-    setEstado("error", "Fallo al iniciar la sincronización: " + (e && e.message ? e.message : e));
+    setEstado("error", textoError(e));
     return;
   }
 

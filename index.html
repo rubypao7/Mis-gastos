@@ -27,6 +27,7 @@
       <span class="badge badge-gray" id="sync-status">Sin conectar</span>
       <button class="cuenta-btn" id="btn-cuenta" data-accion="conectar">Conectar OneDrive</button>
     </div>
+    <p class="sync-msg oculto" id="sync-msg"></p>
   </header>
 
   <main>
@@ -60,6 +61,13 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/dist/msal-browser.min.js"></script>
+  <script>
+    // Si el primer CDN falla (red, bloqueador, caché), intentamos con otro
+    // antes de que arranque la app. Así MSAL tiene una segunda oportunidad.
+    if (typeof msal === "undefined") {
+      document.write('<script src="https://unpkg.com/@azure/msal-browser@3/dist/msal-browser.min.js"><\/script>');
+    }
+  </script>
   <script src="config.js"></script>
   <script src="sync.js"></script>
   <script src="app.js"></script>

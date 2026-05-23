@@ -73,6 +73,18 @@ body {
 }
 .cuenta-btn:active { opacity: 0.7; }
 
+.sync-msg {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+  color: #fff;
+  background: rgba(239, 68, 68, 0.92);
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+.sync-msg.oculto { display: none; }
+
 main { max-width: 640px; margin: 0 auto; padding: 20px; }
 
 .form {
