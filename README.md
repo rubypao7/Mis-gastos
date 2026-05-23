@@ -34,7 +34,3 @@ python3 -m http.server 8000
 - `manifest.json` — configuración de la PWA (nombre, íconos, colores).
 - `sw.js` — Service Worker para que funcione sin conexión.
 - `icons/` — íconos de la app.
-
----
-
-> También se incluye `calculadora.py`, un primer ejemplo de prueba con Python.

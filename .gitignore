@@ -1,3 +1,5 @@
-__pycache__/
-*.pyc
+# Archivos generados
+.DS_Store
+*.log
 .pytest_cache/
+__pycache__/
