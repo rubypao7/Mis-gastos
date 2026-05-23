@@ -39,6 +39,40 @@ body {
 .balance-detail .ingreso { color: #d1fae5; }
 .balance-detail .gasto { color: #fecaca; }
 
+.sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.sync-bar.oculto { display: none; }
+
+.badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+.badge-gray { background: rgba(255, 255, 255, 0.25); }
+.badge-amber { background: rgba(245, 158, 11, 0.9); }
+.badge-green { background: rgba(16, 185, 129, 0.95); }
+.badge-red { background: rgba(239, 68, 68, 0.95); }
+
+.cuenta-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+.cuenta-btn:active { opacity: 0.7; }
+
 main { max-width: 640px; margin: 0 auto; padding: 20px; }
 
 .form {

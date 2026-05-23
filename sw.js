@@ -1,8 +1,10 @@
-const CACHE = "mis-gastos-v1";
+const CACHE = "mis-gastos-v2";
 const ARCHIVOS = [
   "index.html",
   "styles.css",
   "app.js",
+  "config.js",
+  "sync.js",
   "manifest.json",
   "icons/icon-192.png",
   "icons/icon-512.png",

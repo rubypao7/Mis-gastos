@@ -1,7 +1,7 @@
 const STORAGE_KEY = "mis-gastos-v1";
 
-let movimientos = cargar();
 let tipoActual = "gasto";
+let pushTimer = null;
 
 const form = document.getElementById("form");
 const descInput = document.getElementById("descripcion");
@@ -13,17 +13,27 @@ const balanceEl = document.getElementById("balance");
 const ingresosEl = document.getElementById("total-ingresos");
 const gastosEl = document.getElementById("total-gastos");
 const tipoBtns = document.querySelectorAll(".tipo-btn");
+const syncBar = document.getElementById("sync-bar");
+const syncStatus = document.getElementById("sync-status");
+const btnCuenta = document.getElementById("btn-cuenta");
 
-function cargar() {
+// ---- Datos (formato { movimientos: [], updatedAt: ms }) ----
+
+function leerLocal() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!raw) return { movimientos: [], updatedAt: 0 };
+    if (Array.isArray(raw)) return { movimientos: raw, updatedAt: 0 }; // formato antiguo
+    return { movimientos: raw.movimientos || [], updatedAt: raw.updatedAt || 0 };
   } catch {
-    return [];
+    return { movimientos: [], updatedAt: 0 };
   }
 }
 
-function guardar() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(movimientos));
+let datos = leerLocal();
+
+function guardarLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
 }
 
 function formatear(n) {
@@ -35,7 +45,7 @@ function render() {
   let ingresos = 0;
   let gastos = 0;
 
-  for (const m of movimientos) {
+  for (const m of datos.movimientos) {
     if (m.tipo === "ingreso") ingresos += m.monto;
     else gastos += m.monto;
 
@@ -58,13 +68,22 @@ function render() {
   balanceEl.textContent = formatear(ingresos - gastos);
   ingresosEl.textContent = formatear(ingresos);
   gastosEl.textContent = formatear(gastos);
-  vacio.classList.toggle("oculto", movimientos.length > 0);
+  vacio.classList.toggle("oculto", datos.movimientos.length > 0);
+}
+
+// Cualquier cambio local: marca hora, guarda, repinta y programa subida.
+function mutar(fn) {
+  fn();
+  datos.updatedAt = Date.now();
+  guardarLocal();
+  render();
+  programarSubida();
 }
 
 function borrar(id) {
-  movimientos = movimientos.filter((m) => m.id !== id);
-  guardar();
-  render();
+  mutar(() => {
+    datos.movimientos = datos.movimientos.filter((m) => m.id !== id);
+  });
 }
 
 tipoBtns.forEach((btn) => {
@@ -79,20 +98,104 @@ form.addEventListener("submit", (e) => {
   const monto = parseFloat(montoInput.value);
   if (!descInput.value.trim() || isNaN(monto) || monto <= 0) return;
 
-  movimientos.unshift({
-    id: Date.now(),
-    descripcion: descInput.value.trim(),
-    monto,
-    categoria: categoriaInput.value,
-    tipo: tipoActual,
+  mutar(() => {
+    datos.movimientos.unshift({
+      id: Date.now(),
+      descripcion: descInput.value.trim(),
+      monto,
+      categoria: categoriaInput.value,
+      tipo: tipoActual,
+    });
   });
-  guardar();
-  render();
   form.reset();
   descInput.focus();
 });
 
+// ---- Indicador de estado de sincronización ----
+
+function setEstado(estado, detalle) {
+  if (!syncStatus) return;
+  const map = {
+    "sin-conectar": ["Sin conectar", "badge-gray"],
+    sincronizando: ["Sincronizando…", "badge-amber"],
+    ok: ["Sincronizado ✓", "badge-green"],
+    error: ["⚠️ Error de sincronización", "badge-red"],
+  };
+  const [texto, clase] = map[estado] || ["", ""];
+  syncStatus.textContent = texto;
+  syncStatus.className = "badge " + clase;
+  syncStatus.title = detalle || texto;
+
+  const conectado = estado !== "sin-conectar";
+  btnCuenta.textContent = conectado ? "Desconectar" : "Conectar OneDrive";
+  btnCuenta.dataset.accion = conectado ? "desconectar" : "conectar";
+}
+
+// ---- Sincronización ----
+
+async function sincronizar() {
+  if (!syncConfigurada() || !haySesion()) return;
+  setEstado("sincronizando");
+  try {
+    const remoto = await descargarDeNube();
+    const remotoAt = remoto ? remoto.updatedAt || 0 : -1;
+
+    if (remoto && remotoAt > datos.updatedAt) {
+      // La nube tiene lo más reciente: lo adoptamos.
+      datos = { movimientos: remoto.movimientos || [], updatedAt: remotoAt };
+      guardarLocal();
+      render();
+    } else if (!remoto || datos.updatedAt > remotoAt) {
+      // Lo local es más reciente (o no había nada): lo subimos.
+      await subirANube(datos);
+    }
+    setEstado("ok");
+  } catch (e) {
+    setEstado("error", e.message);
+  }
+}
+
+function programarSubida() {
+  if (!syncConfigurada() || !haySesion()) return;
+  setEstado("sincronizando");
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    try {
+      await subirANube(datos);
+      setEstado("ok");
+    } catch (e) {
+      setEstado("error", e.message);
+    }
+  }, 800);
+}
+
+async function arrancarSync() {
+  if (!syncConfigurada()) {
+    if (syncBar) syncBar.classList.add("oculto");
+    return;
+  }
+  if (syncBar) syncBar.classList.remove("oculto");
+
+  btnCuenta.addEventListener("click", async () => {
+    if (btnCuenta.dataset.accion === "desconectar") {
+      await desconectarOneDrive();
+    } else {
+      await conectarOneDrive();
+    }
+  });
+
+  await initSync();
+  if (haySesion()) {
+    await sincronizar();
+  } else {
+    setEstado("sin-conectar");
+  }
+}
+
+// ---- Inicio ----
+
 render();
+arrancarSync();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

@@ -23,6 +23,10 @@
         <span class="gasto">▼ <span id="total-gastos">$0.00</span></span>
       </div>
     </div>
+    <div class="sync-bar oculto" id="sync-bar">
+      <span class="badge badge-gray" id="sync-status">Sin conectar</span>
+      <button class="cuenta-btn" id="btn-cuenta" data-accion="conectar">Conectar OneDrive</button>
+    </div>
   </header>
 
   <main>
@@ -55,6 +59,9 @@
     </section>
   </main>
 
+  <script src="https://alcdn.msauth.net/browser/3.7.1/js/msal-browser.min.js"></script>
+  <script src="config.js"></script>
+  <script src="sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
