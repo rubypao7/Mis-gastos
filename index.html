@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mis Gastos</title>
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mis Gastos">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Mis Gastos</h1>
+    <div class="balance-card">
+      <span class="balance-label">Balance</span>
+      <span class="balance-amount" id="balance">$0.00</span>
+      <div class="balance-detail">
+        <span class="ingreso">▲ <span id="total-ingresos">$0.00</span></span>
+        <span class="gasto">▼ <span id="total-gastos">$0.00</span></span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <form id="form" class="form">
+      <div class="tipo-toggle">
+        <button type="button" class="tipo-btn active" data-tipo="gasto">Gasto</button>
+        <button type="button" class="tipo-btn" data-tipo="ingreso">Ingreso</button>
+      </div>
+      <input type="text" id="descripcion" placeholder="Descripción (ej. Comida)" required>
+      <div class="row">
+        <input type="number" id="monto" placeholder="0.00" step="0.01" min="0.01" inputmode="decimal" required>
+        <select id="categoria">
+          <option value="🍔 Comida">🍔 Comida</option>
+          <option value="🚗 Transporte">🚗 Transporte</option>
+          <option value="🏠 Hogar">🏠 Hogar</option>
+          <option value="🛍️ Compras">🛍️ Compras</option>
+          <option value="🎉 Ocio">🎉 Ocio</option>
+          <option value="💊 Salud">💊 Salud</option>
+          <option value="💼 Salario">💼 Salario</option>
+          <option value="💰 Otros">💰 Otros</option>
+        </select>
+      </div>
+      <button type="submit" class="add-btn">Añadir</button>
+    </form>
+
+    <section class="lista-section">
+      <h2>Movimientos</h2>
+      <ul id="lista" class="lista"></ul>
+      <p id="vacio" class="vacio">Aún no hay movimientos. ¡Añade el primero!</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+:root {
+  --teal: #0f766e;
+  --emerald: #10b981;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --danger: #ef4444;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app-header {
+  background: linear-gradient(135deg, var(--emerald), var(--teal));
+  color: white;
+  padding: calc(env(safe-area-inset-top) + 24px) 20px 32px;
+  border-radius: 0 0 28px 28px;
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+  font-weight: 700;
+}
+
+.balance-card { text-align: center; }
+.balance-label { font-size: 0.85rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
+.balance-amount { display: block; font-size: 2.6rem; font-weight: 800; margin: 4px 0 12px; }
+.balance-detail { display: flex; justify-content: center; gap: 24px; font-size: 1rem; font-weight: 600; }
+.balance-detail .ingreso { color: #d1fae5; }
+.balance-detail .gasto { color: #fecaca; }
+
+main { max-width: 640px; margin: 0 auto; padding: 20px; }
+
+.form {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-top: -20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tipo-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; }
+.tipo-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px;
+  border-radius: 9px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tipo-btn.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
+
+input, select {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  color: var(--text);
+}
+input:focus, select:focus { outline: none; border-color: var(--emerald); }
+
+.row { display: flex; gap: 10px; }
+.row input { flex: 1; }
+.row select { flex: 1.2; }
+
+.add-btn {
+  background: var(--teal);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.add-btn:active { opacity: 0.8; }
+
+.lista-section h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--muted); }
+.lista { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+.item {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: aparecer 0.2s ease;
+}
+@keyframes aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.item-info { flex: 1; min-width: 0; }
+.item-desc { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-cat { font-size: 0.82rem; color: var(--muted); }
+.item-monto { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+.item-monto.ingreso { color: var(--emerald); }
+.item-monto.gasto { color: var(--danger); }
+
+.borrar {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.borrar:active { color: var(--danger); }
+
+.vacio { text-align: center; color: var(--muted); padding: 30px 0; }
+.vacio.oculto { display: none; }
