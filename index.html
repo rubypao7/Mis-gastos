@@ -14,7 +14,10 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>Mis Gastos</h1>
+    <div class="header-top">
+      <h1>Mis Gastos</h1>
+      <button type="button" class="fijos-abrir" id="fijos-abrir">🔁 Fijos</button>
+    </div>
 
     <div class="cuenta-tabs" id="cuenta-tabs">
       <button type="button" class="cuenta-tab" data-vista="Rubén">Rubén</button>
@@ -52,8 +55,6 @@
 
   <main>
     <section class="resumen" id="resumen"></section>
-
-    <button type="button" class="fijos-abrir" id="fijos-abrir">🔁 Gastos e ingresos fijos</button>
 
     <form id="form" class="form">
       <div class="tipo-toggle">

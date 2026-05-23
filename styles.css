@@ -28,9 +28,16 @@ body {
   border-radius: 0 0 28px 28px;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
 .app-header h1 {
   font-size: 1.5rem;
-  margin-bottom: 18px;
   font-weight: 700;
 }
 
@@ -166,7 +173,7 @@ main { max-width: 640px; margin: 0 auto; padding: 20px; }
 }
 
 .tipo-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; }
-.tipo-btn {
+.tipo-btn, .ftipo-btn {
   flex: 1;
   border: none;
   background: transparent;
@@ -178,7 +185,7 @@ main { max-width: 640px; margin: 0 auto; padding: 20px; }
   cursor: pointer;
   transition: all 0.15s;
 }
-.tipo-btn.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
+.tipo-btn.active, .ftipo-btn.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
 
 input, select {
   width: 100%;
@@ -296,7 +303,7 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
 
 /* ---- Formulario: cuenta, fecha, acciones ---- */
 .cuenta-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; }
-.cuenta-sel {
+.cuenta-sel, .fcuenta-sel {
   flex: 1;
   border: none;
   background: transparent;
@@ -308,7 +315,7 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
   cursor: pointer;
   transition: all 0.15s;
 }
-.cuenta-sel.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
+.cuenta-sel.active, .fcuenta-sel.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
 
 .fecha-input { color: var(--text); }
 
@@ -343,18 +350,18 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
 
 /* ---- Fijos: botón, etiqueta y panel ---- */
 .fijos-abrir {
-  width: 100%;
-  background: white;
-  color: var(--teal);
-  border: 1.5px dashed var(--teal);
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 1rem;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  margin-bottom: 16px;
+  white-space: nowrap;
 }
-.fijos-abrir:active { opacity: 0.8; }
+.fijos-abrir:active { opacity: 0.7; }
 
 .item-fijo { border-left: 4px solid var(--teal); }
 .fijo-tag {
