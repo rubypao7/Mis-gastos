@@ -60,12 +60,12 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/dist/msal-browser.min.js"></script>
+  <!-- MSAL servido desde la propia app (no depende de internet externo). -->
+  <script src="vendor/msal-browser.min.js"></script>
   <script>
-    // Si el primer CDN falla (red, bloqueador, caché), intentamos con otro
-    // antes de que arranque la app. Así MSAL tiene una segunda oportunidad.
+    // Respaldo: si la copia local fallara, se intenta desde un CDN.
     if (typeof msal === "undefined") {
-      document.write('<script src="https://unpkg.com/@azure/msal-browser@3/dist/msal-browser.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/dist/msal-browser.min.js"><\/script>');
     }
   </script>
   <script src="config.js"></script>

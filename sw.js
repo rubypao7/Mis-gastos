@@ -1,10 +1,11 @@
-const CACHE = "mis-gastos-v4";
+const CACHE = "mis-gastos-v5";
 const ARCHIVOS = [
   "index.html",
   "styles.css",
   "app.js",
   "config.js",
   "sync.js",
+  "vendor/msal-browser.min.js",
   "manifest.json",
   "icons/icon-192.png",
   "icons/icon-512.png",

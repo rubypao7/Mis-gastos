@@ -143,7 +143,7 @@ function setEstado(estado, detalle) {
     }
   }
 
-  const conectado = estado !== "sin-conectar";
+  const conectado = typeof haySesion === "function" && haySesion();
   btnCuenta.textContent = conectado ? "Desconectar" : "Conectar OneDrive";
   btnCuenta.dataset.accion = conectado ? "desconectar" : "conectar";
 }
