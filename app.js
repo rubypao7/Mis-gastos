@@ -176,15 +176,31 @@ async function arrancarSync() {
   }
   if (syncBar) syncBar.classList.remove("oculto");
 
+  if (typeof msal === "undefined") {
+    setEstado("error", "No se pudo cargar el inicio de sesión de Microsoft. Revisa tu conexión a internet y recarga la app.");
+    return;
+  }
+
   btnCuenta.addEventListener("click", async () => {
-    if (btnCuenta.dataset.accion === "desconectar") {
-      await desconectarOneDrive();
-    } else {
-      await conectarOneDrive();
+    try {
+      if (btnCuenta.dataset.accion === "desconectar") {
+        await desconectarOneDrive();
+      } else {
+        setEstado("sincronizando");
+        await conectarOneDrive();
+      }
+    } catch (e) {
+      setEstado("error", "No se pudo iniciar sesión: " + (e && e.message ? e.message : e));
     }
   });
 
-  await initSync();
+  try {
+    await initSync();
+  } catch (e) {
+    setEstado("error", "Fallo al iniciar la sincronización: " + (e && e.message ? e.message : e));
+    return;
+  }
+
   if (haySesion()) {
     await sincronizar();
   } else {
