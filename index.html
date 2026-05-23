@@ -53,6 +53,8 @@
   <main>
     <section class="resumen" id="resumen"></section>
 
+    <button type="button" class="fijos-abrir" id="fijos-abrir">🔁 Gastos e ingresos fijos</button>
+
     <form id="form" class="form">
       <div class="tipo-toggle">
         <button type="button" class="tipo-btn active" data-tipo="gasto">Gasto</button>
@@ -89,6 +91,52 @@
       <p id="vacio" class="vacio">Aún no hay movimientos. ¡Añade el primero!</p>
     </section>
   </main>
+
+  <div class="overlay oculto" id="fijos-overlay">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Fijos mensuales</h2>
+        <button type="button" id="fijos-cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="panel-nota">Se aplican solos cada mes. Los cambios (importe o activar/desactivar) valen desde este mes en adelante; los meses anteriores no se modifican.</p>
+
+      <ul id="fijos-lista" class="fijos-lista"></ul>
+
+      <h3 class="fijo-form-titulo" id="fijo-form-titulo">Añadir fijo</h3>
+      <form id="fijo-form" class="form">
+        <div class="tipo-toggle">
+          <button type="button" class="ftipo-btn active" data-tipo="gasto">Gasto</button>
+          <button type="button" class="ftipo-btn" data-tipo="ingreso">Ingreso</button>
+        </div>
+        <div class="cuenta-toggle">
+          <button type="button" class="fcuenta-sel active" data-cuenta="Rubén">Rubén</button>
+          <button type="button" class="fcuenta-sel" data-cuenta="Paola">Paola</button>
+        </div>
+        <input type="text" id="fijo-desc" placeholder="Descripción (ej. Alquiler)" required>
+        <div class="row">
+          <input type="number" id="fijo-monto" placeholder="0.00" step="0.01" min="0.01" inputmode="decimal" required>
+          <select id="fijo-cat">
+            <option value="🍔 Comida">🍔 Comida</option>
+            <option value="🚗 Transporte">🚗 Transporte</option>
+            <option value="🏠 Hogar">🏠 Hogar</option>
+            <option value="🛍️ Compras">🛍️ Compras</option>
+            <option value="🎉 Ocio">🎉 Ocio</option>
+            <option value="💊 Salud">💊 Salud</option>
+            <option value="💼 Salario">💼 Salario</option>
+            <option value="💰 Otros">💰 Otros</option>
+          </select>
+        </div>
+        <div id="fijo-desde-campo">
+          <label class="campo-label" for="fijo-desde">Desde el mes</label>
+          <input type="month" id="fijo-desde" class="fecha-input">
+        </div>
+        <div class="form-acciones">
+          <button type="button" class="cancel-btn oculto" id="fijo-cancel">Cancelar</button>
+          <button type="submit" class="add-btn" id="fijo-submit">Añadir fijo</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MSAL servido desde la propia app (no depende de internet externo). -->
   <script src="vendor/msal-browser.min.js"></script>
