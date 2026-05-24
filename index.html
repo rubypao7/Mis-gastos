@@ -16,7 +16,10 @@
   <header class="app-header">
     <div class="header-top">
       <h1>Mis Gastos</h1>
-      <button type="button" class="fijos-abrir" id="fijos-abrir">🔁 Fijos</button>
+      <div class="header-botones">
+        <button type="button" class="fijos-abrir" id="avisos-abrir">🔔 Avisos</button>
+        <button type="button" class="fijos-abrir" id="fijos-abrir">🔁 Fijos</button>
+      </div>
     </div>
 
     <div class="cuenta-tabs" id="cuenta-tabs">
@@ -54,6 +57,8 @@
   </header>
 
   <main>
+    <section class="avisos-banner" id="avisos-banner"></section>
+
     <section class="resumen" id="resumen"></section>
 
     <form id="form" class="form">
@@ -134,6 +139,50 @@
         <div class="form-acciones">
           <button type="button" class="cancel-btn oculto" id="fijo-cancel">Cancelar</button>
           <button type="submit" class="add-btn" id="fijo-submit">Añadir fijo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="overlay oculto" id="avisos-overlay">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Centro de avisos</h2>
+        <button type="button" id="avisos-cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="panel-nota">Avisos de gastos que llegan una vez al año (impuesto del coche, ayuntamiento…). Cuando abras la app en ese mes (y el anterior) te lo recordará. Guarda el importe del año pasado como referencia; puedes cambiarlo cada año.</p>
+
+      <ul id="avisos-lista" class="fijos-lista"></ul>
+
+      <h3 class="fijo-form-titulo" id="aviso-form-titulo">Añadir aviso</h3>
+      <form id="aviso-form" class="form">
+        <input type="text" id="aviso-desc" placeholder="Descripción (ej. Impuesto del coche)" required>
+        <div class="cuenta-toggle">
+          <button type="button" class="acuenta-sel active" data-cuenta="Rubén">Rubén</button>
+          <button type="button" class="acuenta-sel" data-cuenta="Paola">Paola</button>
+        </div>
+        <label class="campo-label" for="aviso-mes">Mes del cargo</label>
+        <select id="aviso-mes">
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+        <div class="row">
+          <input type="number" id="aviso-importe" placeholder="Importe año pasado" step="0.01" min="0" inputmode="decimal">
+          <input type="number" id="aviso-anio" placeholder="Año" step="1" inputmode="numeric">
+        </div>
+        <div class="form-acciones">
+          <button type="button" class="cancel-btn oculto" id="aviso-cancel">Cancelar</button>
+          <button type="submit" class="add-btn" id="aviso-submit">Añadir aviso</button>
         </div>
       </form>
     </div>

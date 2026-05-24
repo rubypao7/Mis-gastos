@@ -127,18 +127,37 @@ function normalizarFijos(arr) {
     .filter((f) => f.cambios.length);
 }
 
+// Un "aviso" recuerda un gasto anual (impuesto, etc.) en un mes concreto.
+function normalizarAvisos(arr) {
+  if (!Array.isArray(arr)) return [];
+  const anioPasado = new Date().getFullYear() - 1;
+  return arr
+    .filter((a) => a && CUENTAS.includes(a.cuenta) && +a.mes >= 1 && +a.mes <= 12)
+    .map((a) => ({
+      id: a.id,
+      descripcion: String(a.descripcion || ""),
+      mes: +a.mes,
+      cuenta: a.cuenta,
+      importe: typeof a.importe === "number" ? a.importe : 0,
+      anio: typeof a.anio === "number" ? a.anio : anioPasado,
+      activo: a.activo !== false,
+      hechoAnio: typeof a.hechoAnio === "number" ? a.hechoAnio : 0,
+    }));
+}
+
 function leerLocal() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!raw) return { movimientos: [], fijos: [], updatedAt: 0 };
+    if (!raw) return { movimientos: [], fijos: [], avisos: [], updatedAt: 0 };
     const arr = Array.isArray(raw) ? raw : raw.movimientos;
     return {
       movimientos: normalizarMovs(arr),
       fijos: normalizarFijos(raw && raw.fijos),
+      avisos: normalizarAvisos(raw && raw.avisos),
       updatedAt: (raw && raw.updatedAt) || 0,
     };
   } catch {
-    return { movimientos: [], fijos: [], updatedAt: 0 };
+    return { movimientos: [], fijos: [], avisos: [], updatedAt: 0 };
   }
 }
 
@@ -292,6 +311,8 @@ function render() {
   renderResumen(movs);
   renderLista(movs);
   renderFijos();
+  renderAvisosBanner();
+  renderAvisos();
 }
 
 function renderControles() {
@@ -759,6 +780,239 @@ fijoForm.addEventListener("submit", (e) => {
   resetFijoForm();
 });
 
+// ---- Centro de avisos ----
+const avisosOverlay = document.getElementById("avisos-overlay");
+const avisosBannerEl = document.getElementById("avisos-banner");
+const avisosListaEl = document.getElementById("avisos-lista");
+const avisoForm = document.getElementById("aviso-form");
+const avisoDescInput = document.getElementById("aviso-desc");
+const avisoMesInput = document.getElementById("aviso-mes");
+const avisoImporteInput = document.getElementById("aviso-importe");
+const avisoAnioInput = document.getElementById("aviso-anio");
+const avisoSubmitBtn = document.getElementById("aviso-submit");
+const avisoCancelBtn = document.getElementById("aviso-cancel");
+const avisoFormTitulo = document.getElementById("aviso-form-titulo");
+const avisoCuentaBtns = document.querySelectorAll(".acuenta-sel");
+
+let avisoCuenta = "Rubén";
+let avisoEditId = null;
+
+function abrirAvisos() {
+  resetAvisoForm();
+  renderAvisos();
+  avisosOverlay.classList.remove("oculto");
+}
+
+function cerrarAvisos() {
+  avisosOverlay.classList.add("oculto");
+}
+
+function actualizarAvisoToggles() {
+  avisoCuentaBtns.forEach((b) => b.classList.toggle("active", b.dataset.cuenta === avisoCuenta));
+}
+
+function resetAvisoForm() {
+  avisoEditId = null;
+  avisoForm.reset();
+  avisoCuenta = "Rubén";
+  actualizarAvisoToggles();
+  avisoMesInput.value = String(new Date().getMonth() + 1);
+  avisoAnioInput.value = String(new Date().getFullYear() - 1);
+  avisoFormTitulo.textContent = "Añadir aviso";
+  avisoSubmitBtn.textContent = "Añadir aviso";
+  avisoCancelBtn.classList.add("oculto");
+}
+
+// Avisos que tocan este mes (o el que viene como anticipo) y no están hechos este año.
+function avisosBanner() {
+  const ahora = new Date();
+  const mesActual = ahora.getMonth() + 1;
+  const anioActual = ahora.getFullYear();
+  const mesSiguiente = (mesActual % 12) + 1;
+  const out = [];
+  for (const a of datos.avisos) {
+    if (!a.activo || a.hechoAnio === anioActual) continue;
+    if (a.mes === mesActual) out.push({ aviso: a, cuando: "este" });
+    else if (a.mes === mesSiguiente) out.push({ aviso: a, cuando: "siguiente" });
+  }
+  return out;
+}
+
+function renderAvisosBanner() {
+  if (!avisosBannerEl) return;
+  avisosBannerEl.innerHTML = "";
+  const items = avisosBanner();
+  for (const { aviso: a, cuando } of items) {
+    const card = el("div", "aviso-card" + (cuando === "siguiente" ? " aviso-proximo" : ""));
+    const cab = el("div", "aviso-cab");
+    cab.appendChild(el("span", "aviso-icono", cuando === "este" ? "🔔" : "📅"));
+    const texto = el("div", "aviso-texto");
+    texto.appendChild(el("div", "aviso-desc", a.descripcion));
+    const sub =
+      (cuando === "este" ? "Este mes" : "El mes que viene (" + cap(mesNombre(a.mes - 1)) + ")") +
+      " · " +
+      a.cuenta +
+      (a.importe > 0 ? " · el año pasado: " + formatear(a.importe) + " (" + a.anio + ")" : "");
+    texto.appendChild(el("div", "aviso-sub", sub));
+    cab.appendChild(texto);
+    card.appendChild(cab);
+
+    const acciones = el("div", "aviso-acciones");
+    const bReg = el("button", "aviso-btn aviso-reg", "Registrar gasto");
+    bReg.addEventListener("click", () => registrarDesdeAviso(a.id));
+    const bHecho = el("button", "aviso-btn", "Hecho este año");
+    bHecho.addEventListener("click", () => marcarHecho(a.id));
+    acciones.appendChild(bReg);
+    acciones.appendChild(bHecho);
+    card.appendChild(acciones);
+
+    avisosBannerEl.appendChild(card);
+  }
+}
+
+function renderAvisos() {
+  if (!avisosListaEl) return;
+  avisosListaEl.innerHTML = "";
+  if (!datos.avisos.length) {
+    avisosListaEl.appendChild(el("p", "panel-vacio", "Aún no has creado ningún aviso."));
+    return;
+  }
+  const orden = [...datos.avisos].sort((a, b) => a.mes - b.mes);
+  for (const a of orden) {
+    const li = el("li", "fijo-item" + (a.activo ? "" : " inactivo"));
+    const top = el("div", "fijo-top");
+    const izq = el("div", "fijo-info");
+    izq.appendChild(el("div", "fijo-desc", a.descripcion));
+    const meta = el("div", "fijo-meta");
+    meta.appendChild(el("span", "cuenta-tag " + (a.cuenta === "Rubén" ? "tag-ruben" : "tag-paola"), a.cuenta));
+    meta.appendChild(el("span", null, cap(mesNombre(a.mes - 1))));
+    izq.appendChild(meta);
+    top.appendChild(izq);
+    if (a.importe > 0) top.appendChild(el("div", "fijo-monto gasto", "≈ " + formatear(a.importe)));
+    li.appendChild(top);
+
+    if (a.importe > 0) li.appendChild(el("div", "aviso-ref", "Referencia del año " + a.anio));
+
+    const acciones = el("div", "fijo-acciones");
+    const bEdit = el("button", "fijo-btn", "Editar");
+    bEdit.addEventListener("click", () => editarAviso(a.id));
+    const bTog = el("button", "fijo-btn " + (a.activo ? "btn-off" : "btn-on"), a.activo ? "Desactivar" : "Activar");
+    bTog.addEventListener("click", () => alternarAviso(a.id));
+    const bDel = el("button", "fijo-btn btn-del", "Eliminar");
+    bDel.addEventListener("click", () => eliminarAviso(a.id));
+    acciones.appendChild(bEdit);
+    acciones.appendChild(bTog);
+    acciones.appendChild(bDel);
+    li.appendChild(acciones);
+
+    avisosListaEl.appendChild(li);
+  }
+}
+
+function registrarDesdeAviso(id) {
+  const a = datos.avisos.find((x) => x.id === id);
+  if (!a) return;
+  cerrarAvisos();
+  editId = null;
+  formTipo = "gasto";
+  formCuenta = a.cuenta;
+  actualizarToggles();
+  descInput.value = a.descripcion;
+  montoInput.value = a.importe > 0 ? a.importe : "";
+  categoriaInput.value = "💰 Otros";
+  fechaInput.value = hoyISO();
+  submitBtn.textContent = "Añadir";
+  cancelBtn.classList.add("oculto");
+  form.classList.remove("editando");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  montoInput.focus();
+}
+
+function marcarHecho(id) {
+  const a = datos.avisos.find((x) => x.id === id);
+  if (!a) return;
+  mutar(() => {
+    a.hechoAnio = new Date().getFullYear();
+  });
+}
+
+function editarAviso(id) {
+  const a = datos.avisos.find((x) => x.id === id);
+  if (!a) return;
+  avisoEditId = id;
+  avisoCuenta = a.cuenta;
+  actualizarAvisoToggles();
+  avisoDescInput.value = a.descripcion;
+  avisoMesInput.value = String(a.mes);
+  avisoImporteInput.value = a.importe > 0 ? a.importe : "";
+  avisoAnioInput.value = String(a.anio);
+  avisoFormTitulo.textContent = "Editar aviso";
+  avisoSubmitBtn.textContent = "Guardar cambios";
+  avisoCancelBtn.classList.remove("oculto");
+  avisoForm.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function alternarAviso(id) {
+  const a = datos.avisos.find((x) => x.id === id);
+  if (!a) return;
+  mutar(() => {
+    a.activo = !a.activo;
+  });
+}
+
+function eliminarAviso(id) {
+  const a = datos.avisos.find((x) => x.id === id);
+  if (!a) return;
+  if (!window.confirm('¿Eliminar el aviso "' + a.descripcion + '"?')) return;
+  mutar(() => {
+    datos.avisos = datos.avisos.filter((x) => x.id !== id);
+  });
+}
+
+avisoCuentaBtns.forEach((b) =>
+  b.addEventListener("click", () => {
+    avisoCuenta = b.dataset.cuenta;
+    actualizarAvisoToggles();
+  })
+);
+
+document.getElementById("avisos-abrir").addEventListener("click", abrirAvisos);
+document.getElementById("avisos-cerrar").addEventListener("click", cerrarAvisos);
+avisoCancelBtn.addEventListener("click", resetAvisoForm);
+
+avisoForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const desc = avisoDescInput.value.trim();
+  if (!desc) return;
+  const importe = parseFloat(avisoImporteInput.value);
+  const anio = parseInt(avisoAnioInput.value, 10);
+
+  mutar(() => {
+    if (avisoEditId !== null) {
+      const a = datos.avisos.find((x) => x.id === avisoEditId);
+      if (a) {
+        a.descripcion = desc;
+        a.cuenta = avisoCuenta;
+        a.mes = +avisoMesInput.value;
+        a.importe = isNaN(importe) ? 0 : importe;
+        a.anio = isNaN(anio) ? a.anio : anio;
+      }
+    } else {
+      datos.avisos.push({
+        id: Date.now(),
+        descripcion: desc,
+        cuenta: avisoCuenta,
+        mes: +avisoMesInput.value,
+        importe: isNaN(importe) ? 0 : importe,
+        anio: isNaN(anio) ? new Date().getFullYear() - 1 : anio,
+        activo: true,
+        hechoAnio: 0,
+      });
+    }
+  });
+  resetAvisoForm();
+});
+
 // ---- Indicador de sincronización ----
 function setEstado(estado, detalle) {
   if (!syncStatus) return;
@@ -800,6 +1054,7 @@ async function sincronizar() {
       datos = {
         movimientos: normalizarMovs(remoto.movimientos),
         fijos: normalizarFijos(remoto.fijos),
+        avisos: normalizarAvisos(remoto.avisos),
         updatedAt: remotoAt,
       };
       guardarLocal();

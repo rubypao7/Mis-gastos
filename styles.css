@@ -303,7 +303,7 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
 
 /* ---- Formulario: cuenta, fecha, acciones ---- */
 .cuenta-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; }
-.cuenta-sel, .fcuenta-sel {
+.cuenta-sel, .fcuenta-sel, .acuenta-sel {
   flex: 1;
   border: none;
   background: transparent;
@@ -315,7 +315,7 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
   cursor: pointer;
   transition: all 0.15s;
 }
-.cuenta-sel.active, .fcuenta-sel.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
+.cuenta-sel.active, .fcuenta-sel.active, .acuenta-sel.active { background: white; color: var(--teal); box-shadow: var(--shadow); }
 
 .fecha-input { color: var(--text); }
 
@@ -349,6 +349,7 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
 .item-fecha { font-weight: 600; color: var(--text); }
 
 /* ---- Fijos: botón, etiqueta y panel ---- */
+.header-botones { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 .fijos-abrir {
   flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.18);
@@ -362,6 +363,37 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
   white-space: nowrap;
 }
 .fijos-abrir:active { opacity: 0.7; }
+
+/* ---- Banner de avisos ---- */
+.avisos-banner { display: flex; flex-direction: column; gap: 12px; }
+.avisos-banner:not(:empty) { margin-bottom: 18px; }
+.aviso-card {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.aviso-card.aviso-proximo { background: #f8fafc; border-color: #e2e8f0; }
+.aviso-cab { display: flex; gap: 10px; align-items: flex-start; }
+.aviso-icono { font-size: 1.3rem; line-height: 1.2; }
+.aviso-texto { min-width: 0; }
+.aviso-desc { font-weight: 700; }
+.aviso-sub { font-size: 0.84rem; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.aviso-acciones { display: flex; gap: 8px; margin-top: 12px; }
+.aviso-btn {
+  flex: 1;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aviso-btn:active { opacity: 0.75; }
+.aviso-btn.aviso-reg { background: var(--teal); color: white; border-color: var(--teal); }
+.aviso-ref { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
 
 .item-fijo { border-left: 4px solid var(--teal); }
 .fijo-tag {
