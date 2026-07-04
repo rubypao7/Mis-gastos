@@ -51,7 +51,7 @@ function el(tag, cls, text) {
 }
 
 function formatear(n) {
-  return "$" + n.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
 }
 
 function hoyISO() {
@@ -464,9 +464,11 @@ function renderLista(movs) {
 
 // ---- Acciones de movimientos ----
 function borrar(id) {
+  const m = datos.movimientos.find((x) => x.id === id);
+  if (m && !window.confirm('¿Borrar "' + m.descripcion + '"?')) return;
   if (editId === id) cancelarEdicion();
   mutar(() => {
-    datos.movimientos = datos.movimientos.filter((m) => m.id !== id);
+    datos.movimientos = datos.movimientos.filter((x) => x.id !== id);
   });
 }
 
