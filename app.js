@@ -1,5 +1,15 @@
 const STORAGE_KEY = "mis-gastos-v1";
 const CUENTAS = ["Rubén", "Paola"];
+const CATS_BASE = [
+  "🍔 Comida", "🚗 Transporte", "🏠 Hogar", "🛍️ Compras",
+  "🎉 Ocio", "💊 Salud", "💼 Salario", "💰 Otros",
+];
+
+// Marca de tiempo "modificado". Si no la hay, usamos el id (que es un Date.now()).
+function marcaMod(o) {
+  if (o && typeof o.mod === "number") return o.mod;
+  return o && typeof o.id === "number" ? o.id : 0;
+}
 
 let pushTimer = null;
 
@@ -40,6 +50,7 @@ const cancelBtn = document.getElementById("cancel-btn");
 const syncBar = document.getElementById("sync-bar");
 const syncStatus = document.getElementById("sync-status");
 const btnCuenta = document.getElementById("btn-cuenta");
+const btnRefrescar = document.getElementById("btn-refrescar");
 const syncMsg = document.getElementById("sync-msg");
 
 // ---- Utilidades ----
@@ -51,7 +62,7 @@ function el(tag, cls, text) {
 }
 
 function formatear(n) {
-  return "$" + n.toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
 }
 
 function hoyISO() {
@@ -100,6 +111,7 @@ function normalizarMovs(arr) {
       categoria: m.categoria || "💰 Otros",
       tipo: m.tipo === "ingreso" ? "ingreso" : "gasto",
       cuenta: m.cuenta,
+      mod: marcaMod(m),
     }));
 }
 
@@ -122,6 +134,7 @@ function normalizarFijos(arr) {
         tipo: f.tipo === "ingreso" ? "ingreso" : "gasto",
         desde: typeof f.desde === "string" ? f.desde : (cambios[0] && cambios[0].mes) || mesActualStr(),
         cambios,
+        mod: marcaMod(f),
       };
     })
     .filter((f) => f.cambios.length);
@@ -142,22 +155,59 @@ function normalizarAvisos(arr) {
       anio: typeof a.anio === "number" ? a.anio : anioPasado,
       activo: a.activo !== false,
       hechoAnio: typeof a.hechoAnio === "number" ? a.hechoAnio : 0,
+      mod: marcaMod(a),
     }));
+}
+
+// Categorías propias que la usuaria haya creado (además de las básicas).
+function normalizarCategorias(arr) {
+  if (!Array.isArray(arr)) return [];
+  const vistas = new Set();
+  const out = [];
+  for (const c of arr) {
+    const s = String(c || "").trim();
+    if (s && !vistas.has(s)) {
+      vistas.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+// "Lápidas" de borrado: { mov:{id:ts}, fijo:{...}, aviso:{...} }.
+function normalizarBorrados(o) {
+  const r = { mov: {}, fijo: {}, aviso: {} };
+  if (!o || typeof o !== "object") return r;
+  for (const k of ["mov", "fijo", "aviso"]) {
+    const src = o[k];
+    if (src && typeof src === "object") {
+      for (const id in src) {
+        if (typeof src[id] === "number") r[k][id] = src[id];
+      }
+    }
+  }
+  return r;
+}
+
+function datosVacios() {
+  return { movimientos: [], fijos: [], avisos: [], categorias: [], borrados: normalizarBorrados(null), updatedAt: 0 };
 }
 
 function leerLocal() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!raw) return { movimientos: [], fijos: [], avisos: [], updatedAt: 0 };
+    if (!raw) return datosVacios();
     const arr = Array.isArray(raw) ? raw : raw.movimientos;
     return {
       movimientos: normalizarMovs(arr),
       fijos: normalizarFijos(raw && raw.fijos),
       avisos: normalizarAvisos(raw && raw.avisos),
+      categorias: normalizarCategorias(raw && raw.categorias),
+      borrados: normalizarBorrados(raw && raw.borrados),
       updatedAt: (raw && raw.updatedAt) || 0,
     };
   } catch {
-    return { movimientos: [], fijos: [], avisos: [], updatedAt: 0 };
+    return datosVacios();
   }
 }
 
@@ -256,8 +306,65 @@ function virtualesFiltrados() {
 
 let datos = leerLocal();
 
+// Recoge en la lista de categorías las que ya se usan en movimientos o fijos,
+// para que aparezcan en los desplegables aunque no se guardaran como "propias".
+function cosecharCategorias() {
+  const set = new Set(datos.categorias);
+  for (const m of datos.movimientos) if (m.categoria && !CATS_BASE.includes(m.categoria)) set.add(m.categoria);
+  for (const f of datos.fijos) if (f.categoria && !CATS_BASE.includes(f.categoria)) set.add(f.categoria);
+  datos.categorias = [...set];
+}
+cosecharCategorias();
+
 function guardarLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
+}
+
+// ---- Categorías (básicas + propias) en los desplegables ----
+function todasCategorias() {
+  return CATS_BASE.concat(datos.categorias.filter((c) => !CATS_BASE.includes(c)));
+}
+
+function poblarSelect(sel, seleccion) {
+  if (!sel) return;
+  const val = seleccion != null ? seleccion : sel.value;
+  const cats = todasCategorias();
+  if (val && val !== "__nueva__" && !cats.includes(val)) cats.push(val); // no perder una categoría antigua
+  sel.innerHTML = "";
+  for (const c of cats) {
+    const o = document.createElement("option");
+    o.value = c;
+    o.textContent = c;
+    sel.appendChild(o);
+  }
+  const nueva = document.createElement("option");
+  nueva.value = "__nueva__";
+  nueva.textContent = "➕ Nueva categoría…";
+  sel.appendChild(nueva);
+  if (val && val !== "__nueva__") sel.value = val;
+  sel.dataset.prev = sel.value;
+}
+
+function poblarCategorias() {
+  poblarSelect(categoriaInput, categoriaInput.value);
+  poblarSelect(fijoCatInput, fijoCatInput.value);
+}
+
+function onNuevaCategoria(sel) {
+  if (sel.value !== "__nueva__") {
+    sel.dataset.prev = sel.value;
+    return;
+  }
+  const nom = (window.prompt("Nombre de la nueva categoría (puedes poner un emoji delante):") || "").trim();
+  if (!nom) {
+    sel.value = sel.dataset.prev || CATS_BASE[0];
+    return;
+  }
+  if (!todasCategorias().includes(nom)) {
+    mutar(() => datos.categorias.push(nom));
+  }
+  poblarSelect(categoriaInput, categoriaInput === sel ? nom : categoriaInput.value);
+  poblarSelect(fijoCatInput, fijoCatInput === sel ? nom : fijoCatInput.value);
 }
 
 function mutar(fn) {
@@ -464,9 +571,12 @@ function renderLista(movs) {
 
 // ---- Acciones de movimientos ----
 function borrar(id) {
+  const m = datos.movimientos.find((x) => x.id === id);
+  if (m && !window.confirm('¿Borrar "' + m.descripcion + '"?')) return;
   if (editId === id) cancelarEdicion();
   mutar(() => {
-    datos.movimientos = datos.movimientos.filter((m) => m.id !== id);
+    datos.movimientos = datos.movimientos.filter((x) => x.id !== id);
+    datos.borrados.mov[id] = Date.now();
   });
 }
 
@@ -580,6 +690,7 @@ form.addEventListener("submit", (e) => {
         m.tipo = formTipo;
         m.cuenta = formCuenta;
         m.fecha = fecha;
+        m.mod = Date.now();
       }
     } else {
       datos.movimientos.unshift({
@@ -590,6 +701,7 @@ form.addEventListener("submit", (e) => {
         categoria: categoriaInput.value,
         tipo: formTipo,
         cuenta: formCuenta,
+        mod: Date.now(),
       });
     }
   });
@@ -718,7 +830,10 @@ function alternarFijo(id) {
   const f = datos.fijos.find((x) => x.id === id);
   if (!f) return;
   const uc = ultimoCambio(f);
-  mutar(() => agregarCambio(f, mesActualStr(), uc.monto, !activoEsteMes(f)));
+  mutar(() => {
+    agregarCambio(f, mesActualStr(), uc.monto, !activoEsteMes(f));
+    f.mod = Date.now();
+  });
 }
 
 function eliminarFijo(id) {
@@ -727,6 +842,7 @@ function eliminarFijo(id) {
   if (!window.confirm('¿Eliminar el fijo "' + f.descripcion + '"? Desaparecerá de todos los meses.')) return;
   mutar(() => {
     datos.fijos = datos.fijos.filter((x) => x.id !== id);
+    datos.borrados.fijo[id] = Date.now();
   });
 }
 
@@ -763,6 +879,7 @@ fijoForm.addEventListener("submit", (e) => {
         f.tipo = fijoTipo;
         // El cambio de importe vale desde este mes; conserva el estado activo actual.
         agregarCambio(f, mesActualStr(), monto, activoEsteMes(f));
+        f.mod = Date.now();
       }
     } else {
       const desde = fijoDesdeInput.value || mesActualStr();
@@ -774,6 +891,7 @@ fijoForm.addEventListener("submit", (e) => {
         tipo: fijoTipo,
         desde,
         cambios: [{ mes: desde, monto, activo: true }],
+        mod: Date.now(),
       });
     }
   });
@@ -933,6 +1051,7 @@ function marcarHecho(id) {
   if (!a) return;
   mutar(() => {
     a.hechoAnio = new Date().getFullYear();
+    a.mod = Date.now();
   });
 }
 
@@ -957,6 +1076,7 @@ function alternarAviso(id) {
   if (!a) return;
   mutar(() => {
     a.activo = !a.activo;
+    a.mod = Date.now();
   });
 }
 
@@ -966,6 +1086,7 @@ function eliminarAviso(id) {
   if (!window.confirm('¿Eliminar el aviso "' + a.descripcion + '"?')) return;
   mutar(() => {
     datos.avisos = datos.avisos.filter((x) => x.id !== id);
+    datos.borrados.aviso[id] = Date.now();
   });
 }
 
@@ -996,6 +1117,7 @@ avisoForm.addEventListener("submit", (e) => {
         a.mes = +avisoMesInput.value;
         a.importe = isNaN(importe) ? 0 : importe;
         a.anio = isNaN(anio) ? a.anio : anio;
+        a.mod = Date.now();
       }
     } else {
       datos.avisos.push({
@@ -1007,6 +1129,7 @@ avisoForm.addEventListener("submit", (e) => {
         anio: isNaN(anio) ? new Date().getFullYear() - 1 : anio,
         activo: true,
         hechoAnio: 0,
+        mod: Date.now(),
       });
     }
   });
@@ -1040,46 +1163,52 @@ function setEstado(estado, detalle) {
   const conectado = typeof haySesion === "function" && haySesion();
   btnCuenta.textContent = conectado ? "Desconectar" : "Conectar OneDrive";
   btnCuenta.dataset.accion = conectado ? "desconectar" : "conectar";
+  if (btnRefrescar) btnRefrescar.classList.toggle("oculto", !conectado);
 }
 
 // ---- Sincronización ----
+let sincronizando = false;
+
 async function sincronizar() {
   if (!syncConfigurada() || !haySesion()) return;
+  if (sincronizando) return; // evita solaparse consigo misma
+  sincronizando = true;
   setEstado("sincronizando");
   try {
     const remoto = await descargarDeNube();
-    const remotoAt = remoto ? remoto.updatedAt || 0 : -1;
-
-    if (remoto && remotoAt > datos.updatedAt) {
-      datos = {
+    if (remoto) {
+      const remotoNorm = {
         movimientos: normalizarMovs(remoto.movimientos),
         fijos: normalizarFijos(remoto.fijos),
         avisos: normalizarAvisos(remoto.avisos),
-        updatedAt: remotoAt,
+        categorias: normalizarCategorias(remoto.categorias),
+        borrados: normalizarBorrados(remoto.borrados),
+        updatedAt: remoto.updatedAt || 0,
       };
+      // Fusión elemento a elemento: no se pierde nada de ningún dispositivo.
+      datos = fusionarDatos(datos, remotoNorm);
+      cosecharCategorias();
       guardarLocal();
+      poblarCategorias();
       render();
-    } else if (!remoto || datos.updatedAt > remotoAt) {
-      await subirANube(datos);
     }
+    // Subimos el resultado ya fusionado para que la nube quede completa.
+    await subirANube(datos);
     setEstado("ok");
   } catch (e) {
     setEstado("error", textoError(e));
+  } finally {
+    sincronizando = false;
   }
 }
 
+// Tras un cambio local, esperamos un poco y hacemos una sincronización completa
+// (bajar + fusionar + subir), no una simple subida que podría pisar la nube.
 function programarSubida() {
   if (!syncConfigurada() || !haySesion()) return;
   setEstado("sincronizando");
   clearTimeout(pushTimer);
-  pushTimer = setTimeout(async () => {
-    try {
-      await subirANube(datos);
-      setEstado("ok");
-    } catch (e) {
-      setEstado("error", textoError(e));
-    }
-  }, 800);
+  pushTimer = setTimeout(() => sincronizar(), 800);
 }
 
 async function arrancarSync() {
@@ -1116,7 +1245,15 @@ async function arrancarSync() {
   }
 }
 
+// ---- Categorías: listeners ----
+categoriaInput.addEventListener("change", () => onNuevaCategoria(categoriaInput));
+fijoCatInput.addEventListener("change", () => onNuevaCategoria(fijoCatInput));
+
+// ---- Botón "Actualizar" (baja y fusiona lo de la nube al momento) ----
+if (btnRefrescar) btnRefrescar.addEventListener("click", () => sincronizar());
+
 // ---- Inicio ----
+poblarCategorias();
 restablecerForm();
 render();
 arrancarSync();

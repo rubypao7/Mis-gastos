@@ -475,3 +475,54 @@ input:focus, select:focus { outline: none; border-color: var(--emerald); }
 
 .fijo-form-titulo { font-size: 0.95rem; color: var(--muted); margin-bottom: 10px; }
 .campo-label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+
+/* ---- Modo oscuro (se adapta al ajuste del móvil) ---- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+
+  input, select {
+    background: #0f172a;
+    color: var(--text);
+    border-color: #334155;
+  }
+  .fecha-input { color: var(--text); }
+
+  .tipo-toggle, .cuenta-toggle { background: #0f172a; }
+  .tipo-btn.active, .ftipo-btn.active,
+  .cuenta-sel.active, .fcuenta-sel.active, .acuenta-sel.active {
+    background: #334155;
+    color: #fff;
+  }
+
+  .cancel-btn { background: #1e293b; border-color: #334155; color: var(--text); }
+  .cat-bar { background: #0f172a; }
+
+  .cuenta-box { border-color: #334155; }
+  .box-ruben { background: #172554; border-color: #1e40af; }
+  .box-paola { background: #500724; border-color: #9d174d; }
+
+  .tag-ruben { background: #1e3a8a; color: #bfdbfe; }
+  .tag-paola { background: #831843; color: #fbcfe8; }
+  .fijo-tag { background: #134e4a; color: #5eead4; }
+
+  .mes-row { border-bottom-color: #334155; }
+
+  .aviso-card { background: #422006; border-color: #a16207; }
+  .aviso-card.aviso-proximo { background: #1e293b; border-color: #334155; }
+  .aviso-btn { background: #0f172a; border-color: #334155; color: var(--text); }
+  .aviso-btn.aviso-reg { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+  .fijo-btn { background: #0f172a; border-color: #334155; color: var(--text); }
+  .fijo-btn.btn-off { border-color: #a16207; color: #fcd34d; }
+  .fijo-btn.btn-on { border-color: #047857; color: #6ee7b7; }
+  .fijo-btn.btn-del { border-color: #b91c1c; color: #fca5a5; }
+
+  .panel-head button { background: #334155; color: var(--text); }
+}
